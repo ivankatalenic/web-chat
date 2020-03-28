@@ -30,7 +30,7 @@ func main() {
 	}
 
 	router.GET("", func(context *gin.Context) {
-		context.File("index.html")
+		context.File("web/index.html")
 	})
 
 	router.GET("/chat", func(context *gin.Context) {
@@ -43,9 +43,9 @@ func main() {
 
 			processWebSocket(conn, log, repo, broadcaster)
 			return
+		} else {
+			context.Status(http.StatusBadRequest)
 		}
-
-		context.Status(http.StatusBadRequest)
 	})
 
 	_ = router.Run(":80")

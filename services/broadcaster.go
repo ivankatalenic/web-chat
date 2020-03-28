@@ -45,7 +45,7 @@ func (b *Broadcaster) broadcast(msg models.Message) {
 
 	for addr, conn := range b.conns {
 		err := conn.WriteJSON(msg)
-		if _, isCloseError := err.(*websocket.CloseError); isCloseError{
+		if _, isCloseError := err.(*websocket.CloseError); isCloseError {
 			b.log.Info("[" + addr + "] has disconnected")
 			removeConns = append(removeConns, conn)
 		}
