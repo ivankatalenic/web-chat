@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>North Croatia Chat</title>
+</head>
+<body onload="onDocumentLoad()">
+<h1>North Croatia Super Advanced Chat</h1>
+
+<p>
+	<label for="nicknameField">Your nickname:</label>
+	<input type="text" id="nicknameField" required>
+</p>
+
+<div id="messages">
+</div>
+
+<br><br>
+
+<p>
+	<label for="messageField">Message:</label>
+	<input type="text" id="messageField" size="32" autofocus>
+</p>
+
+</body>
+</html>
+
+<script>
+
+	var socket;
+
+	const messageField = document.getElementById("messageField");
+	const nicknameField = document.getElementById("nicknameField");
+
+	var messageLog = {
+		messageDiv: document.getElementById("messages"),
+
+		addMessage: function(msg) {
+			let textNode = document.createTextNode(formatMessageOutput(msg));
+			let messageNode = document.createElement("div");
+			messageNode.append(textNode, document.createElement("br"));
+
+			this.messageDiv.appendChild(messageNode);
+
+			this.checkLength();
+		},
+		addInfo: function(str) {
+			let textNode = document.createTextNode(str);
+			let infoNode = document.createElement("div");
+			infoNode.append(textNode, document.createElement("br"));
+
+			this.messageDiv.appendChild(infoNode);
+
+			this.checkLength();
+		},
+		checkLength: function() {
+			const maxVisibleMsgs = 16;
+			const visibleMsgsCount = this.messageDiv.childElementCount;
+
+			let toDeleteMsgs = visibleMsgsCount - maxVisibleMsgs;
+			while (toDeleteMsgs > 0) {
+				let firstNode = this.messageDiv.childNodes[0];
+				this.messageDiv.removeChild(firstNode);
+				toDeleteMsgs--;
+			}
+		},
+	};
+
+	messageField.addEventListener("keydown", event => {
+		if (event.key === "Enter") {
+			messageFieldAction();
+		}
+	});
+
+	function onDocumentLoad() {
+		openWebSocket()
+	}
+
+	function messageFieldAction() {
+		const nick = nicknameField.value;
+		const content = messageField.value;
+
+		const date = new Date();
+		const timestamp = date.toISOString();
+
+		sendMessage({
+			ID: 0,
+			Author: nick,
+			Content: content,
+			Timestamp: timestamp,
+		});
+
+		messageField.value = "";
+	}
+
+	function formatMessageOutput(msg) {
+		return msg.Author + ": " + msg.Content;
+	}
+
+	function openWebSocket() {
+		socket = new WebSocket("ws://" + location.host + "/chat");
+
+		socket.onopen = function (e) {
+			messageLog.addInfo("Connected to the chat!");
+		};
+
+		socket.onmessage = function (event) {
+			messageLog.addMessage(JSON.parse(event.data));
+		};
+
+		socket.onclose = function (event) {
+			messageLog.addInfo("Disconnected from a chat!");
+		};
+
+		socket.onerror = function (error) {
+			// alert(`[error] ${error.message}`);
+			messageLog.addInfo("error: " + error.message);
+		}
+	}
+
+	function sendMessage(msg) {
+		socket.send(JSON.stringify(msg));
+	}
+
+	function respondWebSocket() {
+		socket.send(JSON.stringify({
+			Author: "sik",
+			Content: "hello from a websocket"
+		}));
+	}
+
+	function closeWebSocket() {
+		socket.close(1000, "normal close");
+	}
+
+</script>
