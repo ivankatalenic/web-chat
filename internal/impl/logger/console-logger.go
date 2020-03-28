@@ -2,7 +2,7 @@ package logger
 
 import (
 	"fmt"
-	"github.com/ivankatalenic/web-chat/interfaces"
+	"github.com/ivankatalenic/web-chat/internal/interfaces"
 )
 
 type logger struct {

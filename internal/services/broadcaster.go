@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 	"github.com/gorilla/websocket"
-	"github.com/ivankatalenic/web-chat/interfaces"
-	"github.com/ivankatalenic/web-chat/models"
+	"github.com/ivankatalenic/web-chat/internal/interfaces"
+	"github.com/ivankatalenic/web-chat/internal/models"
 	"sync"
 )
 

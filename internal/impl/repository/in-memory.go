@@ -1,7 +1,7 @@
 package repository
 
 import (
-	"github.com/ivankatalenic/web-chat/models"
+	"github.com/ivankatalenic/web-chat/internal/models"
 	"sync"
 )
 

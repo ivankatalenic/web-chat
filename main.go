@@ -4,9 +4,9 @@ import (
 	"context"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
-	"github.com/ivankatalenic/web-chat/interfaces"
-	"github.com/ivankatalenic/web-chat/models"
-	"github.com/ivankatalenic/web-chat/services"
+	"github.com/ivankatalenic/web-chat/internal/interfaces"
+	"github.com/ivankatalenic/web-chat/internal/models"
+	"github.com/ivankatalenic/web-chat/internal/services"
 	"net/http"
 	"time"
 )

@@ -1,6 +1,6 @@
 package interfaces
 
-import "github.com/ivankatalenic/web-chat/models"
+import "github.com/ivankatalenic/web-chat/internal/models"
 
 // MessageRepository is a message repository
 type MessageRepository interface {

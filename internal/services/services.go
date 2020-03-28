@@ -1,9 +1,9 @@
 package services
 
 import (
-	"github.com/ivankatalenic/web-chat/impl/logger"
-	"github.com/ivankatalenic/web-chat/impl/repository"
-	"github.com/ivankatalenic/web-chat/interfaces"
+	"github.com/ivankatalenic/web-chat/internal/impl/logger"
+	"github.com/ivankatalenic/web-chat/internal/impl/repository"
+	"github.com/ivankatalenic/web-chat/internal/interfaces"
 )
 
 // GetMessageRepository getter

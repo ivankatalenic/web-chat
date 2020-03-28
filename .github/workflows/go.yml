@@ -32,3 +32,8 @@ jobs:
 
             -   name: Build
                 run: go build -v .
+
+            -   name: Deploy
+                uses: "contention/rsync-deployments@master"
+                secrets: ["DEPLOY_KEY"]
+                args: ["-vzr --delete", "--exclude .github --exclude internal ", "lion@northcroatia.org:/web-chat"]
