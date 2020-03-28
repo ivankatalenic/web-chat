@@ -38,4 +38,4 @@ jobs:
                 env:
                     DEPLOY_KEY: ${{secrets.DEPLOY_KEY}}
                 with:
-                    args: "-vzr --delete --exclude .github --exclude internal/ lion@northcroatia.org:/home/lion/web-chat"
+                    args: "-vzr --delete --exclude=.git --exclude=.github --exclude=internal/ lion@northcroatia.org:/home/lion/web-chat"
