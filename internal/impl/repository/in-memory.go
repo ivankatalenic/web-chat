@@ -37,6 +37,9 @@ func (r *InMemory) GetLast(n int64) (models.MessageSlice, error) {
 
 	availableMsgs := min(r.msgCount, r.size)
 	returnMessageCount := min(availableMsgs, n)
+	if returnMessageCount <= 0 {
+		return nil, nil
+	}
 
 	returnMessages := make(models.MessageSlice, returnMessageCount)
 
