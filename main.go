@@ -34,18 +34,18 @@ func main() {
 	})
 
 	router.GET("/chat", func(context *gin.Context) {
-		if context.IsWebsocket() {
-			conn, err := websocketUpgrader.Upgrade(context.Writer, context.Request, nil)
-			if err != nil {
-				log.Error("Failed to upgrade to a WebSocket:\n\t" + err.Error())
-				return
-			}
-
-			processWebSocket(conn, log, repo, broadcaster)
-			return
-		} else {
+		if !context.IsWebsocket() {
 			context.Status(http.StatusBadRequest)
+			return
 		}
+
+		conn, err := websocketUpgrader.Upgrade(context.Writer, context.Request, nil)
+		if err != nil {
+			log.Error("Failed to upgrade to a WebSocket:\n\t" + err.Error())
+			return
+		}
+
+		processWebSocket(conn, log, repo, broadcaster)
 	})
 
 	_ = router.Run(":80")

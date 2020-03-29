@@ -8,7 +8,8 @@ import (
 
 // GetMessageRepository getter
 func GetMessageRepository() interfaces.MessageRepository {
-	return repository.NewInMemory()
+	const repositorySize = 1024
+	return repository.NewInMemory(repositorySize)
 }
 
 func GetLogger() interfaces.Logger {
