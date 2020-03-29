@@ -33,4 +33,7 @@ jobs:
                 env:
                     DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
                     HOST: ${{ secrets.HOST }}
-                run: make deploy
+                run: |
+                    echo "$DEPLOY_KEY" > deploy_key
+                    chmod 600 deploy_key
+                    make deploy
