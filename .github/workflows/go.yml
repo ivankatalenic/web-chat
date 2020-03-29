@@ -34,8 +34,12 @@ jobs:
                 run: go build -v .
 
             -   name: Deploy
-                uses: "contention/rsync-deployments@master"
+                uses: "AEnterprise/rsync-deploy@master"
                 env:
-                    DEPLOY_KEY: ${{secrets.DEPLOY_KEY}}
-                with:
-                    args: "-vzr --delete --exclude=.git --exclude=.github --exclude=internal/ lion@northcroatia.org:/home/lion/web-chat"
+                    DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
+                    ARGS: "-e -c -r --delete"
+                    SERVER_PORT: "22"
+                    FOLDER: "./"
+                    SERVER_IP: "northcroatia.org"
+                    USERNAME: "lion"
+                    SERVER_DESTINATION: "/home/lion/web-chat/"
