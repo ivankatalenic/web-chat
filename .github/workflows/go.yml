@@ -43,3 +43,11 @@ jobs:
                     SERVER_IP: "northcroatia.org"
                     USERNAME: "lion"
                     SERVER_DESTINATION: "/home/lion/web-chat/"
+
+            -   name: Restart Web Server
+                env:
+                    DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
+                run: |
+                    echo "$DEPLOY_KEY" > "deploy_key"
+                    chmod 600 "deploy_key"
+                    ssh -i deploy_key -o StrictHostKeyChecking=no root@northcroatia.org systemctl restart web-chat.service
