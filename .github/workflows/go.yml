@@ -34,9 +34,3 @@ jobs:
                     DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
                     HOST: ${{ secrets.HOST }}
                 run: make deploy
-
-            -   name: Restart Web Server
-                env:
-                    DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
-                    HOST: ${{ secrets.HOST }}
-                run: make restart-service
