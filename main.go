@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"github.com/gin-gonic/autotls"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"github.com/ivankatalenic/web-chat/internal/interfaces"
@@ -29,9 +30,8 @@ func main() {
 		WriteBufferSize: 32,
 	}
 
-	router.GET("", func(context *gin.Context) {
-		context.File("web/index.html")
-	})
+	router.StaticFile("/favicon.ico", "web/favicon.ico")
+	router.StaticFile("", "web/index.html")
 
 	router.GET("/chat", func(context *gin.Context) {
 		if !context.IsWebsocket() {
@@ -48,7 +48,11 @@ func main() {
 		processWebSocket(conn, log, repo, broadcaster)
 	})
 
-	_ = router.Run(":80")
+	//_ = router.Run(":80")
+	err := autotls.Run(router, "northcroatia.org")
+	if err != nil {
+		log.Error(err.Error())
+	}
 }
 
 func processWebSocket(conn *websocket.Conn, log interfaces.Logger, repo interfaces.MessageRepository, broadcaster *services.Broadcaster) {
