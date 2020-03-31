@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"github.com/gin-gonic/autotls"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"github.com/ivankatalenic/web-chat/internal/interfaces"
@@ -48,8 +47,11 @@ func main() {
 		processWebSocket(conn, log, repo, broadcaster)
 	})
 
-	//_ = router.Run(":80")
-	err := autotls.Run(router, "northcroatia.org")
+	err := router.RunTLS(
+		"northcroatia.org",
+		"/etc/letsencrypt/live/northcroatia.org/chain.pem",
+		"/etc/letsencrypt/live/northcroatia.org/privkey.pem",
+	)
 	if err != nil {
 		log.Error(err.Error())
 	}
