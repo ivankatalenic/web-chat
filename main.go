@@ -74,7 +74,7 @@ func main() {
 
 	redirectServer := &http.Server{
 		Addr:    ":http",
-		Handler: nil,
+		Handler: redirectRouter,
 	}
 	go func() {
 		if err := redirectServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
