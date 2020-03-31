@@ -69,7 +69,7 @@ func main() {
 	redirectRouter := gin.Default()
 
 	redirectRouter.GET("", func(c *gin.Context) {
-		c.Redirect(http.StatusMovedPermanently, "https://")
+		c.Redirect(http.StatusMovedPermanently, "https:///")
 	})
 
 	redirectServer := &http.Server{
