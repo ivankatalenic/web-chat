@@ -8,36 +8,37 @@ import (
 	"github.com/ivankatalenic/web-chat/internal/models"
 	"github.com/ivankatalenic/web-chat/internal/services"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 )
 
 func main() {
 	gin.DisableConsoleColor()
 
-	router := gin.Default()
-
 	log := services.GetLogger()
 	repo := services.GetMessageRepository()
 	broadcaster := services.NewBroadcaster(log)
 
-	broadcastCtx, broadcastCancel := context.WithCancel(context.Background())
-	defer broadcastCancel()
-	go broadcaster.Start(broadcastCtx)
+	go broadcaster.Start()
 
 	websocketUpgrader := websocket.Upgrader{
 		ReadBufferSize:  32,
 		WriteBufferSize: 32,
 	}
 
-	router.GET("", func(c *gin.Context) {
+	tlsRouter := gin.Default()
+
+	tlsRouter.GET("", func(c *gin.Context) {
 		c.File("web/index.html")
 	})
 
-	router.GET("/favicon.ico", func(c *gin.Context) {
+	tlsRouter.GET("/favicon.ico", func(c *gin.Context) {
 		c.File("web/favicon.ico")
 	})
 
-	router.GET("/chat", func(context *gin.Context) {
+	tlsRouter.GET("/chat", func(context *gin.Context) {
 		if !context.IsWebsocket() {
 			context.Status(http.StatusBadRequest)
 			return
@@ -49,18 +50,58 @@ func main() {
 			return
 		}
 
-
 		processWebSocket(conn, log, repo, broadcaster)
 	})
 
-	err := router.RunTLS(
-		"northcroatia.org:443",
-		"/etc/letsencrypt/live/northcroatia.org/fullchain.pem",
-		"/etc/letsencrypt/live/northcroatia.org/privkey.pem",
-	)
-	if err != nil {
-		log.Error(err.Error())
+	tlsServer := &http.Server{
+		Addr:    ":https",
+		Handler: tlsRouter,
 	}
+	go func() {
+		if err := tlsServer.ListenAndServeTLS(
+			"/etc/letsencrypt/live/northcroatia.org/fullchain.pem",
+			"/etc/letsencrypt/live/northcroatia.org/privkey.pem",
+		); err != nil && err != http.ErrServerClosed {
+			log.Error(err.Error())
+		}
+	}()
+
+	redirectRouter := gin.Default()
+
+	redirectRouter.GET("", func(c *gin.Context) {
+		c.Redirect(http.StatusMovedPermanently, ":https")
+	})
+
+	redirectServer := &http.Server{
+		Addr:    ":http",
+		Handler: nil,
+	}
+	go func() {
+		if err := redirectServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Error(err.Error())
+		}
+	}()
+
+	quit := make(chan os.Signal)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit // Wait for selected signals
+
+	log.Warning("Shutting down the server!")
+	broadcaster.Stop()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err := redirectServer.Shutdown(ctx); err != nil {
+		log.Error("The server forced to shutdown: " + err.Error())
+	}
+
+	ctx, cancel = context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err := tlsServer.Shutdown(ctx); err != nil {
+		log.Error("The server forced to shutdown: " + err.Error())
+	}
+
+	log.Info("The server shutdown is complete!")
 }
 
 func processWebSocket(conn *websocket.Conn, log interfaces.Logger, repo interfaces.MessageRepository, broadcaster *services.Broadcaster) {

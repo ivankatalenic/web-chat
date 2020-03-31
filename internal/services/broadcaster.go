@@ -7,6 +7,7 @@ import (
 	"github.com/ivankatalenic/web-chat/internal/interfaces"
 	"github.com/ivankatalenic/web-chat/internal/models"
 	"sync"
+	"time"
 )
 
 type Broadcaster struct {
@@ -14,27 +15,34 @@ type Broadcaster struct {
 	connsLock sync.Mutex
 	conns     map[string]*websocket.Conn
 
+	ctx      context.Context
+	stopFunc context.CancelFunc
+
 	log interfaces.Logger
 }
 
 func NewBroadcaster(log interfaces.Logger) *Broadcaster {
+	ctx, cancel := context.WithCancel(context.Background())
 	return &Broadcaster{
 		sendQueue: make(chan models.Message, 32),
 		connsLock: sync.Mutex{},
 		conns:     make(map[string]*websocket.Conn),
 		log:       log,
+		ctx:       ctx,
+		stopFunc:  cancel,
 	}
 }
 
-func (b *Broadcaster) Start(ctx context.Context) {
+func (b *Broadcaster) Start() {
 	for {
 		select {
 		case msg := <-b.sendQueue:
 			b.broadcast(msg)
-		case <-ctx.Done():
+		case <-b.ctx.Done():
 			break
 		}
 	}
+
 }
 
 func (b *Broadcaster) broadcast(msg models.Message) {
@@ -89,4 +97,23 @@ func (b *Broadcaster) AddConn(conn *websocket.Conn) error {
 
 func (b *Broadcaster) SendMessage(msg *models.Message) {
 	b.sendQueue <- *msg
+}
+
+func (b *Broadcaster) Stop() {
+	b.connsLock.Lock()
+	defer b.connsLock.Unlock()
+
+	b.stopFunc()
+
+	msg := models.Message{
+		Author:    "SERVER",
+		Content:   "Closing the connection: Server is shutting down!",
+		Timestamp: time.Now(),
+	}
+
+	for _, conn := range b.conns {
+		_ = conn.WriteJSON(msg)
+		_ = conn.WriteControl(websocket.CloseGoingAway, nil, time.Now().Add(50*time.Millisecond))
+		_ = conn.Close()
+	}
 }

@@ -110,24 +110,16 @@
 		};
 
 		socket.onclose = function (event) {
-			messageLog.addInfo("Disconnected from a chat!");
+			messageLog.addInfo("Disconnected from the chat!");
 		};
 
 		socket.onerror = function (error) {
-			// alert(`[error] ${error.message}`);
 			messageLog.addInfo("error: " + error.message);
 		}
 	}
 
 	function sendMessage(msg) {
 		socket.send(JSON.stringify(msg));
-	}
-
-	function respondWebSocket() {
-		socket.send(JSON.stringify({
-			Author: "sik",
-			Content: "hello from a websocket"
-		}));
 	}
 
 	function closeWebSocket() {
