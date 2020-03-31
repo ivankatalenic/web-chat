@@ -29,8 +29,13 @@ func main() {
 		WriteBufferSize: 32,
 	}
 
-	router.StaticFile("/favicon.ico", "web/favicon.ico")
-	router.StaticFile("", "web/index.html")
+	router.GET("", func(c *gin.Context) {
+		c.File("web/index.html")
+	})
+
+	router.GET("/favicon.ico", func(c *gin.Context) {
+		c.File("web/favicon.ico")
+	})
 
 	router.GET("/chat", func(context *gin.Context) {
 		if !context.IsWebsocket() {
@@ -43,6 +48,7 @@ func main() {
 			log.Error("Failed to upgrade to a WebSocket:\n\t" + err.Error())
 			return
 		}
+
 
 		processWebSocket(conn, log, repo, broadcaster)
 	})

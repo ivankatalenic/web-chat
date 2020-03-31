@@ -99,7 +99,7 @@
 	}
 
 	function openWebSocket() {
-		socket = new WebSocket("ws://" + location.host + "/chat");
+		socket = new WebSocket("wss://" + location.host + "/chat");
 
 		socket.onopen = function (e) {
 			messageLog.addInfo("Connected to the chat!");
