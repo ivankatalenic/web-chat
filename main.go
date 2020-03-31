@@ -49,7 +49,7 @@ func main() {
 
 	err := router.RunTLS(
 		"northcroatia.org:443",
-		"/etc/letsencrypt/live/northcroatia.org/chain.pem",
+		"/etc/letsencrypt/live/northcroatia.org/fullchain.pem",
 		"/etc/letsencrypt/live/northcroatia.org/privkey.pem",
 	)
 	if err != nil {
