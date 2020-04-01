@@ -30,15 +30,19 @@ func main() {
 
 	tlsRouter := gin.Default()
 
-	tlsRouter.GET("", func(c *gin.Context) {
-		c.File("web/index.html")
-	})
-
 	tlsRouter.GET("/favicon.ico", func(c *gin.Context) {
 		c.File("web/favicon.ico")
 	})
 
-	tlsRouter.GET("/chat", func(context *gin.Context) {
+	authorized := tlsRouter.Group("/", gin.BasicAuth(gin.Accounts{
+		"nyx": "jezvalilmuskepodiskacu",
+	}))
+
+	authorized.GET("", func(c *gin.Context) {
+		c.File("web/index.html")
+	})
+
+	authorized.GET("/chat", func(context *gin.Context) {
 		if !context.IsWebsocket() {
 			context.Status(http.StatusBadRequest)
 			return
@@ -70,6 +74,10 @@ func main() {
 
 	redirectRouter.GET("", func(c *gin.Context) {
 		c.Redirect(http.StatusMovedPermanently, "https://northcroatia.org")
+	})
+
+	redirectRouter.GET("/favicon.ico", func(c *gin.Context) {
+		c.File("web/favicon.ico")
 	})
 
 	redirectServer := &http.Server{
