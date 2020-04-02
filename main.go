@@ -72,8 +72,8 @@ func main() {
 
 	redirectRouter := gin.Default()
 
-	redirectRouter.GET("/*catchAll", func(c *gin.Context) {
-		c.Redirect(http.StatusMovedPermanently, "https://northcroatia.org/" + c.Param("catchAll"))
+	redirectRouter.GET("*catchAll", func(c *gin.Context) {
+		c.Redirect(http.StatusMovedPermanently, "https://" + ServerConfig.Host + c.Param("catchAll"))
 	})
 
 	redirectServer := &http.Server{
