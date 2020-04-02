@@ -35,7 +35,7 @@ func main() {
 	})
 
 	authorized := tlsRouter.Group("/", gin.BasicAuth(gin.Accounts{
-		"nyx": "jezvalilmuskepodiskacu",
+		"nyx": "<3",
 	}))
 
 	authorized.GET("", func(c *gin.Context) {
@@ -72,12 +72,8 @@ func main() {
 
 	redirectRouter := gin.Default()
 
-	redirectRouter.GET("", func(c *gin.Context) {
-		c.Redirect(http.StatusMovedPermanently, "https://northcroatia.org")
-	})
-
-	redirectRouter.GET("/favicon.ico", func(c *gin.Context) {
-		c.File("web/favicon.ico")
+	redirectRouter.GET("/*catchAll", func(c *gin.Context) {
+		c.Redirect(http.StatusMovedPermanently, "https://northcroatia.org/" + c.Param("catchAll"))
 	})
 
 	redirectServer := &http.Server{
