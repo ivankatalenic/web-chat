@@ -4,8 +4,9 @@ import (
 	"context"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
+	"github.com/ivankatalenic/web-chat/internal/impl/client"
+	"github.com/ivankatalenic/web-chat/internal/impl/logger"
 	"github.com/ivankatalenic/web-chat/internal/interfaces"
-	"github.com/ivankatalenic/web-chat/internal/models"
 	"github.com/ivankatalenic/web-chat/internal/services"
 	"net/http"
 	"os"
@@ -19,7 +20,7 @@ func main() {
 
 	log := services.GetLogger()
 	repo := services.GetMessageRepository()
-	broadcaster := services.NewBroadcaster(log)
+	broadcaster := services.NewBroadcaster(logger.NewPrefix(log, "BROADCASTER"))
 
 	go broadcaster.Start()
 
@@ -35,7 +36,7 @@ func main() {
 	})
 
 	authorized := tlsRouter.Group("/", gin.BasicAuth(gin.Accounts{
-		"nyx": "jezvalilmuskepodiskacu",
+		"nyx": "<3",
 	}))
 
 	authorized.GET("", func(c *gin.Context) {
@@ -51,10 +52,13 @@ func main() {
 		conn, err := websocketUpgrader.Upgrade(context.Writer, context.Request, nil)
 		if err != nil {
 			log.Error("Failed to upgrade to a WebSocket:\n\t" + err.Error())
+			context.Status(http.StatusBadRequest)
 			return
 		}
 
-		processWebSocket(conn, log, repo, broadcaster)
+		c := client.NewWebSocket(conn)
+		processChatClient(c, log, repo, broadcaster)
+		context.Status(http.StatusOK)
 	})
 
 	tlsServer := &http.Server{
@@ -112,53 +116,59 @@ func main() {
 	log.Info("The server shutdown is complete!")
 }
 
-func processWebSocket(conn *websocket.Conn, log interfaces.Logger, repo interfaces.MessageRepository, broadcaster *services.Broadcaster) {
+func processChatClient(
+	client interfaces.Client,
+	log interfaces.Logger,
+	repo interfaces.MessageRepository,
+	broadcaster *services.Broadcaster) {
+
 	var err error
 
 	// Send last n messages
 	msgs, err := repo.GetLast(10)
 	for _, msg := range msgs {
-		err := conn.WriteJSON(msg)
+		err := client.SendMessage(msg)
 		if err != nil {
-			log.Error("Cannot send a JSON\n\t" + err.Error())
-			_ = conn.Close()
+			log.Error(err.Error())
+			_ = client.Disconnect()
 			return
 		}
 	}
 
-	err = broadcaster.AddConn(conn)
+	err = broadcaster.AddClient(client)
 	if err != nil {
 		log.Info(err.Error())
 		return
 	}
 
-	go func(conn *websocket.Conn, log interfaces.Logger, repo interfaces.MessageRepository, broadcaster *services.Broadcaster) {
-		addr := conn.RemoteAddr().String()
+	go func(
+		client interfaces.Client,
+		log interfaces.Logger,
+		repo interfaces.MessageRepository,
+		broadcaster *services.Broadcaster) {
+
+		addr := client.GetAddress()
 		for {
-			var msg models.Message
-			err := conn.ReadJSON(&msg)
-
-			if _, isCloseError := err.(*websocket.CloseError); isCloseError {
-				broadcaster.RemoveConn(conn)
+			if client.IsDisconnected() {
 				break
 			}
 
+			msg, err := client.GetMessage()
 			if err != nil {
-				log.Error("Cannot read a JSON\n\t" + err.Error())
-				broadcaster.RemoveConn(conn)
-				break
+				log.Error(err.Error())
+				continue
 			}
-
-			log.Info("[" + addr + "] " + msg.Author + ": " + msg.Content)
-
 			msg.Timestamp = time.Now()
-			err = repo.Put(&msg)
+
+			log.Info("New message: [" + addr + "] " + msg.Author + ": " + msg.Content)
+
+			err = repo.Put(msg)
 			if err != nil {
-				log.Error("Cannot put message in a repository\n\t" + err.Error())
+				log.Error(err.Error())
 			}
 
-			broadcaster.SendMessage(&msg)
+			broadcaster.BroadcastMessage(msg)
 		}
-	}(conn, log, repo, broadcaster)
+	}(client, log, repo, broadcaster)
 
 }

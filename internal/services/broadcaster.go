@@ -3,17 +3,16 @@ package services
 import (
 	"context"
 	"errors"
-	"github.com/gorilla/websocket"
 	"github.com/ivankatalenic/web-chat/internal/interfaces"
 	"github.com/ivankatalenic/web-chat/internal/models"
 	"sync"
-	"time"
 )
 
 type Broadcaster struct {
 	sendQueue chan models.Message
-	connsLock sync.Mutex
-	conns     map[string]*websocket.Conn
+
+	clientMapLock sync.Mutex
+	clientMap     map[string]interfaces.Client
 
 	ctx      context.Context
 	stopFunc context.CancelFunc
@@ -24,12 +23,12 @@ type Broadcaster struct {
 func NewBroadcaster(log interfaces.Logger) *Broadcaster {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &Broadcaster{
-		sendQueue: make(chan models.Message, 32),
-		connsLock: sync.Mutex{},
-		conns:     make(map[string]*websocket.Conn),
-		log:       log,
-		ctx:       ctx,
-		stopFunc:  cancel,
+		sendQueue:     make(chan models.Message, 512),
+		clientMapLock: sync.Mutex{},
+		clientMap:     make(map[string]interfaces.Client),
+		log:           log,
+		ctx:           ctx,
+		stopFunc:      cancel,
 	}
 }
 
@@ -46,74 +45,59 @@ func (b *Broadcaster) Start() {
 }
 
 func (b *Broadcaster) broadcast(msg models.Message) {
-	var removeConns []*websocket.Conn
+	var disconnectedClients []interfaces.Client
 
-	b.connsLock.Lock()
-	defer b.connsLock.Unlock()
+	b.clientMapLock.Lock()
+	defer b.clientMapLock.Unlock()
 
-	for addr, conn := range b.conns {
-		err := conn.WriteJSON(msg)
-		if _, isCloseError := err.(*websocket.CloseError); isCloseError {
-			b.log.Info("[" + addr + "] has disconnected")
-			removeConns = append(removeConns, conn)
+	for _, client := range b.clientMap {
+		if client.IsDisconnected() {
+			disconnectedClients = append(disconnectedClients, client)
+			continue
 		}
+
+		err := client.SendMessage(&msg)
 		if err != nil {
-			b.log.Error("Failed to write a JSON to [" + addr + "]:\n\t" + err.Error())
-			removeConns = append(removeConns, conn)
+			b.log.Error(err.Error())
 		}
 	}
 
 	// Removing disconnected connections
-	for _, conn := range removeConns {
-		_ = conn.Close()
-		delete(b.conns, conn.RemoteAddr().String())
+	for _, client := range disconnectedClients {
+		delete(b.clientMap, client.GetAddress())
 	}
 }
 
-func (b *Broadcaster) RemoveConn(conn *websocket.Conn) {
-	b.connsLock.Lock()
-	defer b.connsLock.Unlock()
-	delete(b.conns, conn.RemoteAddr().String())
-	_ = conn.Close()
-}
-
-func (b *Broadcaster) AddConn(conn *websocket.Conn) error {
-	if conn == nil {
+func (b *Broadcaster) AddClient(client interfaces.Client) error {
+	if client == nil {
 		return nil
 	}
 
-	addr := conn.RemoteAddr().String()
+	addr := client.GetAddress()
 
-	b.connsLock.Lock()
-	defer b.connsLock.Unlock()
-	_, ok := b.conns[addr]
+	b.clientMapLock.Lock()
+	defer b.clientMapLock.Unlock()
+
+	_, ok := b.clientMap[addr]
 	if ok {
-		return errors.New("connection is already added")
+		return errors.New("client is already added to broadcaster")
 	}
 
-	b.conns[addr] = conn
+	b.clientMap[addr] = client
 	return nil
 }
 
-func (b *Broadcaster) SendMessage(msg *models.Message) {
+func (b *Broadcaster) BroadcastMessage(msg *models.Message) {
 	b.sendQueue <- *msg
 }
 
 func (b *Broadcaster) Stop() {
-	b.connsLock.Lock()
-	defer b.connsLock.Unlock()
+	b.clientMapLock.Lock()
+	defer b.clientMapLock.Unlock()
 
 	b.stopFunc()
 
-	msg := models.Message{
-		Author:    "SERVER",
-		Content:   "Closing the connection: Server is shutting down!",
-		Timestamp: time.Now(),
-	}
-
-	for _, conn := range b.conns {
-		_ = conn.WriteJSON(msg)
-		_ = conn.WriteControl(websocket.CloseGoingAway, nil, time.Now().Add(50*time.Millisecond))
-		_ = conn.Close()
+	for _, client := range b.clientMap {
+		delete(b.clientMap, client.GetAddress())
 	}
 }

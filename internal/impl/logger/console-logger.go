@@ -5,25 +5,25 @@ import (
 	"github.com/ivankatalenic/web-chat/internal/interfaces"
 )
 
-type logger struct {
+type console struct {
 }
 
-// NewConsoleLogger returns a new console logger
+// NewConsoleLogger returns a new console prefixLogger
 func NewConsoleLogger() interfaces.Logger {
-	return logger{}
+	return console{}
 }
 
 // Informational message
-func (logger) Info(msg string) {
+func (console) Info(msg string) {
 	fmt.Println("INFO: " + msg)
 }
 
 // Warning message
-func (logger) Warning(msg string) {
+func (console) Warning(msg string) {
 	fmt.Println("WARNING: " + msg)
 }
 
 // Error message
-func (logger) Error(msg string) {
+func (console) Error(msg string) {
 	fmt.Println("ERROR: " + msg)
 }
