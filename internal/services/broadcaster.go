@@ -8,6 +8,7 @@ import (
 	"sync"
 )
 
+// Broadcaster holds information needed for broadcasting messages to clients
 type Broadcaster struct {
 	sendQueue chan models.Message
 
@@ -20,6 +21,7 @@ type Broadcaster struct {
 	log interfaces.Logger
 }
 
+// NewBroadcaster returns a new initialized broadcaster
 func NewBroadcaster(log interfaces.Logger) *Broadcaster {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &Broadcaster{
@@ -32,6 +34,7 @@ func NewBroadcaster(log interfaces.Logger) *Broadcaster {
 	}
 }
 
+// Start starts the broadcast loop
 func (b *Broadcaster) Start() {
 	for {
 		select {
@@ -68,6 +71,7 @@ func (b *Broadcaster) broadcast(msg models.Message) {
 	}
 }
 
+// AddClient adds a client to the broadcasting loop
 func (b *Broadcaster) AddClient(client interfaces.Client) error {
 	if client == nil {
 		return nil
@@ -87,10 +91,12 @@ func (b *Broadcaster) AddClient(client interfaces.Client) error {
 	return nil
 }
 
+// BroadcastMessage sends message to all clients in the broadcast loop
 func (b *Broadcaster) BroadcastMessage(msg *models.Message) {
 	b.sendQueue <- *msg
 }
 
+// Stop stops the broadcast loop
 func (b *Broadcaster) Stop() {
 	b.clientMapLock.Lock()
 	defer b.clientMapLock.Unlock()

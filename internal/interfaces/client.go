@@ -2,6 +2,7 @@ package interfaces
 
 import "github.com/ivankatalenic/web-chat/internal/models"
 
+// Client is an interface for a chat client
 type Client interface {
 	GetAddress() string
 

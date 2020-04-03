@@ -12,6 +12,7 @@ func GetMessageRepository() interfaces.MessageRepository {
 	return repository.NewInMemory(repositorySize)
 }
 
+// GetLogger getter
 func GetLogger() interfaces.Logger {
 	return logger.NewConsoleLogger()
 }
