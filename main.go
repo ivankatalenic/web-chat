@@ -4,10 +4,12 @@ import (
 	"context"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
+	"github.com/ivankatalenic/web-chat/internal/config"
 	"github.com/ivankatalenic/web-chat/internal/impl/client"
 	"github.com/ivankatalenic/web-chat/internal/impl/logger"
 	"github.com/ivankatalenic/web-chat/internal/interfaces"
 	"github.com/ivankatalenic/web-chat/internal/services"
+	_ "github.com/joho/godotenv/autoload"
 	"net/http"
 	"os"
 	"os/signal"
@@ -36,7 +38,7 @@ func main() {
 	})
 
 	authorized := tlsRouter.Group("/", gin.BasicAuth(gin.Accounts{
-		"nyx": "<3",
+		config.Auth.Username: config.Auth.Password,
 	}))
 
 	authorized.GET("", func(c *gin.Context) {
@@ -67,8 +69,8 @@ func main() {
 	}
 	go func() {
 		if err := tlsServer.ListenAndServeTLS(
-			"/etc/letsencrypt/live/northcroatia.org/fullchain.pem",
-			"/etc/letsencrypt/live/northcroatia.org/privkey.pem",
+			config.TLS.CertFilePath,
+			config.TLS.KeyFilePath,
 		); err != nil && err != http.ErrServerClosed {
 			log.Error(err.Error())
 		}
@@ -77,7 +79,7 @@ func main() {
 	redirectRouter := gin.Default()
 
 	redirectRouter.GET("*catchAll", func(c *gin.Context) {
-		c.Redirect(http.StatusMovedPermanently, "https://" + ServerConfig.Host + c.Param("catchAll"))
+		c.Redirect(http.StatusMovedPermanently, "https://" + config.Server.Host + c.Param("catchAll"))
 	})
 
 	redirectServer := &http.Server{
