@@ -25,7 +25,6 @@ jobs:
             -   name: Get dependencies
                 run: |
                     go get -v -t -d ./...
-                    go get -u golang.org/x/lint/golint
 
             -   name: Test
                 run: make test
@@ -41,9 +40,9 @@ jobs:
                     PASSWORD: ${{ secrets.PASSWORD }}
                 run: |
                     echo "" > ".env"
-                    echo "$HOST" >> ".env"
-                    echo "$USERNAME" >> ".env"
-                    echo "$PASSWORD" >> ".env"
+                    echo "HOST=$HOST" >> ".env"
+                    echo "USERNAME=$USERNAME" >> ".env"
+                    echo "PASSWORD=$PASSWORD" >> ".env"
 
                     echo "$DEPLOY_KEY" > deploy_key
                     chmod 600 deploy_key
