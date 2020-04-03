@@ -1,10 +1,7 @@
 build:
 	go build -v .
 
-make lint:
-	golint ./...
-
-make test:
+test:
 	go test -v -count=1 ./...
 
 check:
