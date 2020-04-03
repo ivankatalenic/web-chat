@@ -93,6 +93,9 @@ func (b *Broadcaster) AddClient(client interfaces.Client) error {
 
 // BroadcastMessage sends message to all clients in the broadcast loop
 func (b *Broadcaster) BroadcastMessage(msg *models.Message) {
+	if msg == nil {
+		return
+	}
 	b.sendQueue <- *msg
 }
 

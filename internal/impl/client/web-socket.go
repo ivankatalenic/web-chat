@@ -32,10 +32,18 @@ func (client *WebSocket) GetAddress() string {
 
 // SendMessage sends message to a client
 func (client *WebSocket) SendMessage(message *models.Message) error {
+	if message == nil {
+		return nil
+	}
 	if client.isDisconnected {
 		return errors.New("client is disconnected")
 	}
-	return client.conn.WriteJSON(message)
+	err := client.conn.WriteJSON(message)
+	if _, isCloseError := err.(*websocket.CloseError); isCloseError {
+		_ = client.Disconnect()
+		return nil
+	}
+	return err
 }
 
 // GetMessage returns the last unread message from a client
@@ -45,6 +53,10 @@ func (client *WebSocket) GetMessage() (*models.Message, error) {
 	}
 	msg := new(models.Message)
 	err := client.conn.ReadJSON(msg)
+	if _, isCloseError := err.(*websocket.CloseError); isCloseError {
+		_ = client.Disconnect()
+		return nil, nil
+	}
 	if err != nil {
 		return nil, err
 	}
