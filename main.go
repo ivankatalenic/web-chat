@@ -126,7 +126,6 @@ func processChatClient(
 		err := client.SendMessage(msg)
 		if err != nil {
 			log.Error(err.Error())
-			_ = client.Disconnect()
 			return
 		}
 	}

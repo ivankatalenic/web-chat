@@ -35,13 +35,14 @@ func (client *WebSocket) SendMessage(message *models.Message) error {
 	if message == nil {
 		return nil
 	}
+
 	if client.isDisconnected {
 		return errors.New("client is disconnected")
 	}
+
 	err := client.conn.WriteJSON(message)
 	if _, isCloseError := err.(*websocket.CloseError); isCloseError {
 		_ = client.Disconnect()
-		return nil
 	}
 	return err
 }
@@ -51,11 +52,11 @@ func (client *WebSocket) GetMessage() (*models.Message, error) {
 	if client.isDisconnected {
 		return nil, errors.New("client is disconnected")
 	}
+
 	msg := new(models.Message)
 	err := client.conn.ReadJSON(msg)
 	if _, isCloseError := err.(*websocket.CloseError); isCloseError {
 		_ = client.Disconnect()
-		return nil, nil
 	}
 	if err != nil {
 		return nil, err
@@ -65,6 +66,9 @@ func (client *WebSocket) GetMessage() (*models.Message, error) {
 
 // Disconnect disconnects client
 func (client *WebSocket) Disconnect() error {
+	if client.isDisconnected {
+		return nil
+	}
 	_ = client.conn.WriteControl(
 		websocket.CloseNormalClosure,
 		[]byte("Disconnecting the client"),
