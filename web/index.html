@@ -110,6 +110,12 @@
 		});
 	}
 
+	function formatTimestamp(timestamp) {
+		let d = new Date(timestamp);
+		return d.getDate() + ". " + (d.getMonth() + 1) + ". " + d.getFullYear()
+			+ ". " + d.getHours() + ":" + d.getMinutes() + ":" + d.getSeconds();
+	}
+
 	function formatMessageOutput(msg) {
 		return "[" + msg.Timestamp + "] " + msg.Author + ": " + msg.Content;
 	}
