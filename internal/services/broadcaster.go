@@ -97,6 +97,7 @@ func (b *Broadcaster) BroadcastMessage(msg *models.Message) error {
 		return errors.New("the message is nil")
 	}
 	b.sendQueue <- *msg
+	return nil
 }
 
 // Stop stops the broadcast loop
