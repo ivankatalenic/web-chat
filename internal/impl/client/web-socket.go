@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-// WebSocket holds infromation about a WebSocket chat client
+// WebSocket holds information about a WebSocket chat client
 type WebSocket struct {
 	conn           *websocket.Conn
 	addr           string
@@ -33,45 +33,45 @@ func (client *WebSocket) GetAddress() string {
 // SendMessage sends message to a client
 func (client *WebSocket) SendMessage(message *models.Message) error {
 	if message == nil {
-		return nil
+		return errors.New("the message is nil")
 	}
 
 	if client.isDisconnected {
-		return errors.New("client is disconnected")
+		return errors.New("the client is disconnected")
 	}
 
 	err := client.conn.WriteJSON(message)
-	if _, isCloseError := err.(*websocket.CloseError); isCloseError {
-		_ = client.Disconnect()
+	if err != nil {
+		_ = client.Disconnect("server got an error while sending a message to you")
+		return err
 	}
-	return err
+	return nil
 }
 
 // GetMessage returns the last unread message from a client
 func (client *WebSocket) GetMessage() (*models.Message, error) {
 	if client.isDisconnected {
-		return nil, errors.New("client is disconnected")
+		return nil, errors.New("the client is disconnected")
 	}
 
 	msg := new(models.Message)
 	err := client.conn.ReadJSON(msg)
-	if _, isCloseError := err.(*websocket.CloseError); isCloseError {
-		_ = client.Disconnect()
-	}
 	if err != nil {
+		_ = client.Disconnect("server got an error while reading a message from you")
 		return nil, err
 	}
 	return msg, nil
 }
 
 // Disconnect disconnects client
-func (client *WebSocket) Disconnect() error {
+func (client *WebSocket) Disconnect(reason string) error {
 	if client.isDisconnected {
 		return nil
 	}
+
 	_ = client.conn.WriteControl(
 		websocket.CloseNormalClosure,
-		[]byte("Disconnecting the client"),
+		[]byte(reason),
 		time.Now().Add(100*time.Millisecond),
 	)
 	_ = client.conn.Close()

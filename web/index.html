@@ -10,7 +10,7 @@
 
 <p>
 	<label for="nicknameField">Your nickname:</label>
-	<input type="text" id="nicknameField" required>
+	<input type="text" id="nicknameField" autofocus>
 </p>
 
 <div id="messages">
@@ -20,7 +20,7 @@
 
 <p>
 	<label for="messageField">Message:</label>
-	<input type="text" id="messageField" size="32" autofocus>
+	<input type="text" id="messageField" size="32">
 </p>
 
 </body>
@@ -69,7 +69,25 @@
 
 	messageField.addEventListener("keydown", event => {
 		if (event.key === "Enter") {
+			if (nicknameField.value.length === 0) {
+				nicknameField.focus();
+				alert("Please enter the nickname");
+				return;
+			}
 			messageFieldAction();
+			messageField.value = "";
+			messageField.focus();
+		}
+	});
+
+	nicknameField.addEventListener("keydown", event => {
+		if (event.key === "Enter") {
+			if (nicknameField.value.length === 0) {
+				nicknameField.focus();
+				alert("Please enter the nickname");
+				return;
+			}
+			messageField.focus();
 		}
 	});
 
@@ -90,12 +108,10 @@
 			Content: content,
 			Timestamp: timestamp,
 		});
-
-		messageField.value = "";
 	}
 
 	function formatMessageOutput(msg) {
-		return msg.Author + ": " + msg.Content;
+		return "[" + msg.Timestamp + "] " + msg.Author + ": " + msg.Content;
 	}
 
 	function openWebSocket() {
@@ -110,11 +126,11 @@
 		};
 
 		socket.onclose = function (event) {
-			messageLog.addInfo("Disconnected from the chat!");
+			messageLog.addInfo("Disconnected from the chat! Reason: " + event.reason);
 		};
 
 		socket.onerror = function (error) {
-			messageLog.addInfo("error: " + error.message);
+			messageLog.addInfo("Error: " + error.message);
 		}
 	}
 

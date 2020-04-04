@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
+	"github.com/ivankatalenic/web-chat/internal/models"
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/ivankatalenic/web-chat/internal/config"
 	"github.com/ivankatalenic/web-chat/internal/impl/client"
@@ -26,11 +27,6 @@ func main() {
 
 	go broadcaster.Start()
 
-	websocketUpgrader := websocket.Upgrader{
-		ReadBufferSize:  32,
-		WriteBufferSize: 32,
-	}
-
 	tlsRouter := gin.Default()
 
 	tlsRouter.GET("/favicon.ico", func(c *gin.Context) {
@@ -45,6 +41,10 @@ func main() {
 		c.File("web/index.html")
 	})
 
+	websocketUpgrader := websocket.Upgrader{
+		ReadBufferSize:  32,
+		WriteBufferSize: 32,
+	}
 	authorized.GET("/chat", func(context *gin.Context) {
 		if !context.IsWebsocket() {
 			context.Status(http.StatusBadRequest)
@@ -59,7 +59,7 @@ func main() {
 		}
 
 		c := client.NewWebSocket(conn)
-		processChatClient(c, log, repo, broadcaster)
+		initChatClient(c, log, repo, broadcaster)
 		context.Status(http.StatusOK)
 	})
 
@@ -114,7 +114,7 @@ func main() {
 	log.Info("The server shutdown is complete!")
 }
 
-func processChatClient(
+func initChatClient(
 	client interfaces.Client,
 	log interfaces.Logger,
 	repo interfaces.MessageRepository,
@@ -138,34 +138,52 @@ func processChatClient(
 		return
 	}
 
-	go func(
-		client interfaces.Client,
-		log interfaces.Logger,
-		repo interfaces.MessageRepository,
-		broadcaster *services.Broadcaster) {
+	go serveChatClient(client, log, repo, broadcaster)
+}
 
-		addr := client.GetAddress()
-		for {
-			if client.IsDisconnected() {
+func serveChatClient(
+	client interfaces.Client,
+	log interfaces.Logger,
+	repo interfaces.MessageRepository,
+	broadcaster *services.Broadcaster) {
+
+	addr := client.GetAddress()
+	for {
+		if client.IsDisconnected() {
+			break
+		}
+
+		msg, err := client.GetMessage()
+		if err != nil {
+			log.Error(err.Error())
+			break
+		}
+
+		if len(msg.Author) == 0 {
+			err := client.SendMessage(&models.Message{
+				Author:    "SERVER",
+				Content:   "Your message is missing the author",
+				Timestamp: time.Now(),
+			})
+			if err != nil {
+				log.Error(err.Error())
 				break
 			}
-
-			msg, err := client.GetMessage()
-			if err != nil {
-				log.Error(err.Error())
-				continue
-			}
-			msg.Timestamp = time.Now()
-
-			log.Info("New message: [" + addr + "] " + msg.Author + ": " + msg.Content)
-
-			err = repo.Put(msg)
-			if err != nil {
-				log.Error(err.Error())
-			}
-
-			broadcaster.BroadcastMessage(msg)
+			continue
 		}
-	}(client, log, repo, broadcaster)
 
+		msg.Timestamp = time.Now()
+
+		log.Info("New message: [" + addr + "] " + msg.Author + ": " + msg.Content)
+
+		err = repo.Put(msg)
+		if err != nil {
+			log.Error(err.Error())
+		}
+
+		err = broadcaster.BroadcastMessage(msg)
+		if err != nil {
+			log.Error(err.Error())
+		}
+	}
 }

@@ -9,6 +9,6 @@ type Client interface {
 	SendMessage(message *models.Message) error
 	GetMessage() (*models.Message, error)
 
-	Disconnect() error
+	Disconnect(reason string) error
 	IsDisconnected() bool
 }

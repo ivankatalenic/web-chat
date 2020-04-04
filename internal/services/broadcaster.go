@@ -74,7 +74,7 @@ func (b *Broadcaster) broadcast(msg models.Message) {
 // AddClient adds a client to the broadcasting loop
 func (b *Broadcaster) AddClient(client interfaces.Client) error {
 	if client == nil {
-		return nil
+		return errors.New("the client is nil")
 	}
 
 	addr := client.GetAddress()
@@ -84,7 +84,7 @@ func (b *Broadcaster) AddClient(client interfaces.Client) error {
 
 	_, ok := b.clientMap[addr]
 	if ok {
-		return errors.New("client is already added to broadcaster")
+		return errors.New("the client is already added to the broadcaster")
 	}
 
 	b.clientMap[addr] = client
@@ -92,9 +92,9 @@ func (b *Broadcaster) AddClient(client interfaces.Client) error {
 }
 
 // BroadcastMessage sends message to all clients in the broadcast loop
-func (b *Broadcaster) BroadcastMessage(msg *models.Message) {
+func (b *Broadcaster) BroadcastMessage(msg *models.Message) error {
 	if msg == nil {
-		return
+		return errors.New("the message is nil")
 	}
 	b.sendQueue <- *msg
 }
