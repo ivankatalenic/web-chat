@@ -71,7 +71,7 @@
 		if (event.key === "Enter") {
 			if (nicknameField.value.length === 0) {
 				nicknameField.focus();
-				alert("Please enter the nickname");
+				alert("Please provide a nickname");
 				return;
 			}
 			messageFieldAction();
@@ -84,7 +84,7 @@
 		if (event.key === "Enter") {
 			if (nicknameField.value.length === 0) {
 				nicknameField.focus();
-				alert("Please enter the nickname");
+				alert("Please provide a nickname");
 				return;
 			}
 			messageField.focus();
@@ -117,7 +117,7 @@
 	}
 
 	function formatMessageOutput(msg) {
-		return "[" + msg.Timestamp + "] " + msg.Author + ": " + msg.Content;
+		return "[" + formatTimestamp(msg.Timestamp) + "] " + msg.Author + ": " + msg.Content;
 	}
 
 	function openWebSocket() {
