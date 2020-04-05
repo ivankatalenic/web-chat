@@ -110,10 +110,22 @@
 		});
 	}
 
+	function zeroPad(num, minDigits) {
+		let retStr = num.toString();
+		while (retStr.length < minDigits) {
+			retStr = "0" + retStr;
+		}
+		return retStr;
+	}
+
 	function formatTimestamp(timestamp) {
 		let d = new Date(timestamp);
-		return d.getDate() + ". " + (d.getMonth() + 1) + ". " + d.getFullYear()
-			+ ". " + d.getHours() + ":" + d.getMinutes() + ":" + d.getSeconds();
+		return d.getDate() + ". "
+			+ (d.getMonth() + 1) + ". "
+			+ d.getFullYear() + ". "
+			+ zeroPad(d.getHours(), 2) + ":"
+			+ zeroPad(d.getMinutes(), 2) + ":"
+			+ zeroPad(d.getSeconds(), 2);
 	}
 
 	function formatMessageOutput(msg) {
