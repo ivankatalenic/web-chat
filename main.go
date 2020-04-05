@@ -68,9 +68,10 @@ func main() {
 		Handler: tlsRouter,
 	}
 	go func() {
+		tlsManager := services.NewCertificateManager(config.TLS)
 		if err := tlsServer.ListenAndServeTLS(
-			config.TLS.CertFilePath,
-			config.TLS.KeyFilePath,
+			tlsManager.CertFilePath,
+			tlsManager.KeyFilePath,
 		); err != nil && err != http.ErrServerClosed {
 			log.Error(err.Error())
 		}

@@ -1,6 +1,8 @@
 package config
 
-import "os"
+import (
+	"github.com/ivankatalenic/web-chat/internal/helpers"
+)
 
 type auth struct {
 	Username string
@@ -9,6 +11,6 @@ type auth struct {
 
 // Auth variable holds the configuration used for the authorization
 var Auth = auth{
-	Username: os.Getenv("USERNAME"),
-	Password: os.Getenv("PASSWORD"),
+	Username: helpers.GetEnvVarOrDefault("USER", "user"),
+	Password: helpers.GetEnvVarOrDefault("PASSWORD", "SecurePass1234"),
 }

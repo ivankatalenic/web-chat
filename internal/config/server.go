@@ -1,6 +1,8 @@
 package config
 
-import "os"
+import (
+	"github.com/ivankatalenic/web-chat/internal/helpers"
+)
 
 type serverConfig struct {
 	Host string
@@ -8,5 +10,5 @@ type serverConfig struct {
 
 // Server hold the configuration for a server
 var Server = serverConfig{
-	Host: os.Getenv("HOST"),
+	Host: helpers.GetEnvVarOrDefault("HOST", "localhost"),
 }

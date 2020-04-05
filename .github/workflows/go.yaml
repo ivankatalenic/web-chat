@@ -36,12 +36,12 @@ jobs:
                 env:
                     DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
                     HOST: ${{ secrets.HOST }}
-                    USERNAME: ${{ secrets.USERNAME }}
+                    USER: ${{ secrets.USER }}
                     PASSWORD: ${{ secrets.PASSWORD }}
                 run: |
                     echo "" > ".env"
                     echo "HOST=$HOST" >> ".env"
-                    echo "USERNAME=$USERNAME" >> ".env"
+                    echo "USER=$USER" >> ".env"
                     echo "PASSWORD=$PASSWORD" >> ".env"
 
                     echo "$DEPLOY_KEY" > deploy_key
